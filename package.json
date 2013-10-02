@@ -1,0 +1,24 @@
+{
+  "name": "hyperaudio-pad-testbed",
+  "description": "Hyperaudio Pad",
+  "version": "1.0.0",
+  "homepage": "http://hyperaud.io",
+  "author": "Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io)",
+  "keywords": [
+    "audio",
+    "video",
+    "transcript"
+  ],
+  "dependencies": {
+    "wordselect": "git://github.com/hyperaudio-dev/wordselect.git#master",
+    "dragdrop": "git://github.com/hyperaudio-dev/dragdrop.git#master"
+  },
+  "devDependencies": {
+    "jshint": "~2.1.10",
+    "uglify-js": "~2.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperaudio-dev/hyperaudio-pad-testbed"
+  }
+}
