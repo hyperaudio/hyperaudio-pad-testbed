@@ -1,4 +1,4 @@
-/*! hap-mobile v1.0.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
+/*! hyperaudio-pad-testbed v1.0.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
 var DragDrop = (function (window, document) {
 
 	function DragDrop (handle, droppable, options) {
@@ -332,12 +332,12 @@ var DragDrop = (function (window, document) {
 
 		if ( this.options.mouse ) {
 			this.element.addEventListener('mousemove', this, false);
-			this.element.addEventListener('mouseup', this, false);
+			window.addEventListener('mouseup', this, false);
 		}
 
 		if ( this.options.touch ) {
 			this.element.addEventListener('touchmove', this, false);
-			this.element.addEventListener('touchend', this, false);
+			window.addEventListener('touchend', this, false);
 		}
 
 		if ( hasClass(e.target, 'selected') ) {
