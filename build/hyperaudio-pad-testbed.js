@@ -1,4 +1,4 @@
-/*! hyperaudio-pad-testbed v1.0.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
+/*! hyperaudio-pad-testbed v1.0.1 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
 var DragDrop = (function (window, document) {
 
 	function DragDrop (handle, droppable, options) {
@@ -156,10 +156,6 @@ var DragDrop = (function (window, document) {
 
 		this.lastTarget = target;
 
-		if ( this.list.querySelector('.placeholder') ) {
-			this.list.removeChild(this.placeholder);
-		}
-
 		if ( target == this.droppable ) {
 			this.list.appendChild(this.placeholder);
 			return;
@@ -197,24 +193,22 @@ var DragDrop = (function (window, document) {
 		this.draggable.parentNode.removeChild(this.draggable);
 		this.draggable = null;
 
-		// if we are reordering, remove the original element
-		if ( this.reordering ) {
-			if ( this.handle._dragInstance ) {
-				this.handle._dragInstance.destroy();
-				this.handle._dragInstance = null;
-			}
-
-			this.handle.parentNode.removeChild(this.handle);
-		}
-
 		// we dropped outside of the draggable area, so exit
 		if ( !this.list.querySelector('.placeholder') ) {
 			return;
 		}
 
-		var el = document.createElement('li');
-		el.className = this.handleClassName || 'item';
-		el.innerHTML = html;
+		var el;
+
+		// if we are reordering, reuse the original element
+		if ( this.reordering ) {
+			el = this.handle;
+			this.handle.style.display = '';
+		} else {
+			el = document.createElement('li');
+			el.className = this.handleClassName || 'item';
+			el.innerHTML = html;
+		}
 
 		this.list.insertBefore(el, this.placeholder);
 		this.placeholder.parentNode.removeChild(this.placeholder);
@@ -560,13 +554,6 @@ APP.dropped = function (el, html) {
 		draggableClass: draggableClass,
 		onDragStart: function () {
 			stage.className = 'dragdrop';
-			el.style.display = 'none';
-			if ( actions ) {
-				actions._tap.destroy();
-			}
-		},
-		onDrop: function (el) {
-			APP.dropped(el, html);
 		}
 	});
 };
@@ -579,8 +566,12 @@ APP.init = (function (window, document) {
 	var fade;
 	var pause;
 
+	var videoSource;
+	var videoStage;
+
 	function loaded () {
 		stage = document.getElementById('stage');
+		videoSource = document.querySelector('#video-source video');
 
 		// Init the main text selection
 		textselect = new WordSelect('#transcript', {
@@ -603,7 +594,7 @@ APP.init = (function (window, document) {
 		});
 
 		// Init the side menu
-		sidemenu = new APP.SideMenu('#sidemenu');
+		sidemenu = new APP.SideMenu('#sidemenu', mediaSelect);
 
 		// Init special fx
 		fade = new DragDrop('#fadeFX', stage, {
@@ -634,6 +625,14 @@ APP.init = (function (window, document) {
 	// kickstart
 	function init () {
 		// nothing to do
+	}
+
+	function mediaSelect (el) {
+		var source = el.getAttribute('data-source');
+
+		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
+		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
+		videoSource.load();
 	}
 
 	window.addEventListener('load', loaded, false);
@@ -851,14 +850,29 @@ APP.init = (function (window, document) {
 	return EditBlock;
 })();APP.SideMenu = (function (document) {
 
-	function SideMenu (el) {
+	function SideMenu (el, fn) {
 		this.el = document.querySelector(el);
+		this.mediaCallback = fn;
 
 		var handle = document.querySelector('#sidemenu-handle');
 		handle._tap = new APP.Tap(handle);
 		handle.addEventListener('tap', this.toggleMenu.bind(this), false);
 
 		this.updateStatus();
+
+		// handle the tab bar
+		var tabs = document.querySelectorAll('#sidemenu .tabbar li');
+		for ( var i = tabs.length-1; i >= 0; i-- ) {
+			tabs[i]._tap = new APP.Tap(tabs[i]);
+			tabs[i].addEventListener('tap', this.selectPanel.bind(this), false);
+		}
+
+		// handle the items list
+		var items = document.querySelectorAll('#sidemenu .panel');
+		for ( i = items.length-1; i >= 0; i-- ) {
+			items[i]._tap = new APP.Tap(items[i]);
+			items[i].addEventListener('tap', this.selectMedia.bind(this), false);
+		}
 	}
 
 	SideMenu.prototype.updateStatus = function () {
@@ -889,6 +903,31 @@ APP.init = (function (window, document) {
 
 		this.el.className = this.el.className.replace(/(^|\s)opened(\s|$)/, ' ');
 		this.opened = false;
+	};
+
+	SideMenu.prototype.selectPanel = function (e) {
+		var current = document.querySelector('#sidemenu .tabbar li.selected');
+		var incoming = e.currentTarget;
+		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
+		incoming.className += ' selected';
+
+		var panelID = 'panel' + incoming.id.replace('sidemenu', '');
+		current = document.querySelector('#sidemenu .panel.selected');
+		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
+		incoming = document.querySelector('#' + panelID);
+		incoming.className += ' selected';
+	};
+
+	SideMenu.prototype.selectMedia = function (e) {
+		e.stopPropagation();	// just in case
+
+		var starter = e.target;
+
+		if ( !e.target.getAttribute('data-source') || !this.mediaCallback ) {
+			return;
+		}
+
+		this.mediaCallback(starter);
 	};
 
 	return SideMenu;

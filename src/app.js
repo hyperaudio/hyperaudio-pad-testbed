@@ -28,13 +28,6 @@ APP.dropped = function (el, html) {
 		draggableClass: draggableClass,
 		onDragStart: function () {
 			stage.className = 'dragdrop';
-			el.style.display = 'none';
-			if ( actions ) {
-				actions._tap.destroy();
-			}
-		},
-		onDrop: function (el) {
-			APP.dropped(el, html);
 		}
 	});
 };
@@ -47,8 +40,12 @@ APP.init = (function (window, document) {
 	var fade;
 	var pause;
 
+	var videoSource;
+	var videoStage;
+
 	function loaded () {
 		stage = document.getElementById('stage');
+		videoSource = document.querySelector('#video-source video');
 
 		// Init the main text selection
 		textselect = new WordSelect('#transcript', {
@@ -71,7 +68,7 @@ APP.init = (function (window, document) {
 		});
 
 		// Init the side menu
-		sidemenu = new APP.SideMenu('#sidemenu');
+		sidemenu = new APP.SideMenu('#sidemenu', mediaSelect);
 
 		// Init special fx
 		fade = new DragDrop('#fadeFX', stage, {
@@ -102,6 +99,14 @@ APP.init = (function (window, document) {
 	// kickstart
 	function init () {
 		// nothing to do
+	}
+
+	function mediaSelect (el) {
+		var source = el.getAttribute('data-source');
+
+		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
+		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
+		videoSource.load();
 	}
 
 	window.addEventListener('load', loaded, false);

@@ -24,8 +24,8 @@ APP.init();
 
 	<div id="video-source" class="video">
 		<video controls>
-			<source src="videos/clapper-responds.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
-			<source src="videos/clapper-responds.webm" type='video/webm; codecs="vp8, vorbis"'>
+			<source id="source-mp4" src="videos/clapper-responds.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
+			<source id="source-webm" src="videos/clapper-responds.webm" type='video/webm; codecs="vp8, vorbis"'>
 		</video>
 	</div>
 
@@ -42,6 +42,18 @@ APP.init();
 
 	<div id="sidemenu">
 		<div id="sidemenu-handle" class="icon-menu"></div>
+		<ul class="tabbar">
+			<li id="sidemenu-media" class="selected"><span class="icon-videocam-outline">Media</span></li>
+			<li id="sidemenu-bgm"><span class="icon-music">BGM</span></li>
+		</ul>
+		<ul class="panel selected" id="panel-media">
+			<li data-source="clapper-responds">Clapper responds</li>
+			<li data-source="sen-feinstein-1212">Sen. Feinstein</li>
+		</ul>
+		<ul class="panel" id="panel-bgm">
+			<li data-source="x">Place holder 1</li>
+			<li data-source="y">Place holder 2</li>
+		</ul>
 	</div>
 
 	<footer id="footer">
