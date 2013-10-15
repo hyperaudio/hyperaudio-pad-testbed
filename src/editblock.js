@@ -34,7 +34,7 @@ APP.EditBlock = (function () {
 
 		for ( var i = 0; i < wordCount; i++ ) {
 			if ( this.words[i].parentNode != prevContainer ) {
-				if ( newParagraph && cutPointReached ) {
+				if ( newParagraph && cutPointReached && newParagraph.querySelector('a') ) {
 					newBlock.appendChild(newParagraph);
 				}
 
