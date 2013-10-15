@@ -27,7 +27,7 @@ APP.EditBlock = (function () {
 		}
 
 		// Create a new block
-		var newBlock = document.createElement('li');
+		var newBlock = document.createElement('section');
 		var newParagraph, prevContainer;
 
 		newBlock.className = 'item';
