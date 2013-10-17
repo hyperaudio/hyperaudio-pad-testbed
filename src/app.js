@@ -28,6 +28,9 @@ APP.dropped = function (el, html) {
 		draggableClass: draggableClass,
 		onDragStart: function () {
 			stage.className = 'dragdrop';
+		},
+		onDrop: function () {
+			stage.className = '';
 		}
 	});
 };
@@ -37,8 +40,10 @@ APP.init = (function (window, document) {
 	var textselect;
 	var sidemenu;
 	var stage;
+
 	var fade;
 	var pause;
+	var title;
 
 	var videoSource;
 	var videoStage;
@@ -94,6 +99,18 @@ APP.init = (function (window, document) {
 				APP.dropped(el, 'Pause');
 			}
 		});
+
+		title = new DragDrop('#titleFX', stage, {
+			draggableClass: 'draggableEffect',
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+			},
+			onDrop: function (el) {
+				el.className += ' effect';
+				el.innerHTML = '<form><label>Title: <span class="value">1</span>s</label><input type="text" value="Title"><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+				APP.dropped(el, 'Title');
+			}
+		});
 	}
 
 	// kickstart
@@ -107,6 +124,10 @@ APP.init = (function (window, document) {
 		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
 		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
 		videoSource.load();
+	}
+
+	function findDraggable (el) {
+		return (/(^|\s)item($|\s)/).test(el.className) ? el : false;
 	}
 
 	window.addEventListener('load', loaded, false);

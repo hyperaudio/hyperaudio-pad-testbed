@@ -23,6 +23,27 @@ APP.SideMenu = (function (document) {
 			items[i]._tap = new APP.Tap(items[i]);
 			items[i].addEventListener('tap', this.selectMedia.bind(this), false);
 		}
+
+		function onDragStart (e) {
+			stage.className = 'dragdrop';
+		}
+
+		function onDrop (el) {
+			el.className += ' effect';
+			el.innerHTML = '<form><label>BGM: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+			APP.dropped(el, 'BGM');			
+		}
+
+		// add drag and drop to BGM
+		items = document.querySelectorAll('#panel-bgm li');
+		var stage = document.getElementById('stage');
+		for ( i = items.length-1; i >= 0; i-- ) {
+			items[i]._dragInstance = new DragDrop(items[i], stage, {
+				draggableClass: 'draggableEffect',
+				onDragStart: onDragStart,
+				onDrop: onDrop
+			});
+		}
 	}
 
 	SideMenu.prototype.updateStatus = function () {

@@ -7,17 +7,36 @@ APP.EditBlock = (function () {
 		this.el.className += ' edit';
 		this.el._tap = new APP.Tap(el);
 		this.el.addEventListener('tap', this, false);
+
+		document.addEventListener('touchend', this, false);
+		document.addEventListener('mouseup', this, false);
 	}
 
 	EditBlock.prototype.handleEvent = function (e) {
 		switch (e.type) {
+			case 'touchend':
+			case 'mouseup':
+				this.cancel(e);
+				break;
 			case 'tap':
 				this.edit(e);
 				break;
 		}
 	};
 
+	EditBlock.prototype.cancel = function (e) {
+		var target = e.target;
+
+		if ( target == this.el || target.parentNode == this.el || target.parentNode.parentNode == this.el ) {
+			return;
+		}
+
+		this.destroy();
+	};
+
 	EditBlock.prototype.edit = function (e) {
+		e.stopPropagation();
+
 		var theCut = e.target;
 		var cutPointReached;
 		var wordCount = this.words.length;
@@ -66,13 +85,16 @@ APP.EditBlock = (function () {
 
 		APP.dropped(newBlock);
 
-		// Remove edit status
-		this.el.className = this.el.className.replace(/(^|\s)edit(\s|$)/g, ' ');
-
 		this.destroy();
 	};
 
 	EditBlock.prototype.destroy = function () {
+		// Remove edit status
+		this.el.className = this.el.className.replace(/(^|\s)edit(\s|$)/g, ' ');
+
+		document.removeEventListener('touchend', this, false);
+		document.removeEventListener('mouseup', this, false);
+
 		this.el.removeEventListener('tap', this, false);
 		this.el._editBlock = null;
 

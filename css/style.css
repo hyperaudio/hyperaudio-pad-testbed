@@ -82,7 +82,7 @@ html, body {
 	height: 100%;
 }
 
-body,ul,li,pre,h1,header,footer,section,p {
+body,ul,li,pre,h1,header,footer,section,p,input {
 	padding: 0;
 	margin: 0;
 	border: 0;
@@ -243,7 +243,7 @@ h1 {
 	width: 280px;
 	height: 100%;
 	background: #222;
-	z-index: 9999;
+	z-index: 999;
 	border-right: 4px solid #387847;
 	-webkit-transform: translate(-100%, 0) translateZ(0);
 	-moz-transform: translate(-100%, 0) translateZ(0);
@@ -418,7 +418,7 @@ h1 {
 .draggable {
 	opacity: 0.8;
 	position: absolute;
-	z-index: 1000;
+	z-index: 9999;
 	width: 30%;
 	max-height: 4.7em;
 	overflow: hidden;
@@ -427,6 +427,11 @@ h1 {
 	line-height: 1.4em;
 	font-size: 1.3em;
 	pointer-events: none;
+	-webkit-transform: translate(0, 0) translateZ(0);
+	-moz-transform: translate(0, 0) translateZ(0);
+	-ms-transform: translate(0, 0) translateZ(0);
+	-o-transform: translate(0, 0) translateZ(0);
+	transform: translate(0, 0) translateZ(0);
 }
 
 .draggable.draggableEffect {
@@ -535,18 +540,27 @@ h1 {
 	font-size: 1.4em;
 	line-height: 48px;
 	border-left: 2px solid #387847;
+
+	display: -webkit-box;
+	display: -moz-box;
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	display: flex;
 }
 
 #effects li {
-	display: block;
-	float: left;
-	width: 50%;
 	text-align: center;
 	height: 48px;
+	border-right: 2px solid #fff;
+	-webkit-box-flex: 1.0;
+	-moz-box-flex: 1.0;
+	-webkit-flex: 1.0;
+	-ms-flex: 1.0;
+	flex: 1.0;
 }
 
-#effects li:first-child {
-	border-right: 2px solid #fff;
+#effects li:last-child {
+	border-right: 0;
 }
 
 #stage .effect {
@@ -558,4 +572,15 @@ h1 {
 #stage .effect input {
 	display: block;
 	width: 100%;
+}
+
+#stage .effect input[type=text] {
+	padding: 4px;
+	margin: 6px 0;
+	background: #D6EFD6;
+	outline: 0!important;
+}
+
+#stage .effect input[type=text]:focus {
+	background: #fff;
 }

@@ -68,7 +68,10 @@ var DragDrop = (function (window, document) {
 	};
 
 	DragDrop.prototype.start = function (e) {
-		if ( /INPUT/.test(e.target.tagName) ) {
+		var point = e.touches ? e.touches[0] : e,
+			target = e.touches ? document.elementFromPoint(point.pageX, point.pageY) : point.target;
+
+		if ( /INPUT/.test(target.tagName) ) {
 			return;
 		}
 
@@ -556,6 +559,9 @@ APP.dropped = function (el, html) {
 		draggableClass: draggableClass,
 		onDragStart: function () {
 			stage.className = 'dragdrop';
+		},
+		onDrop: function () {
+			stage.className = '';
 		}
 	});
 };
@@ -565,8 +571,10 @@ APP.init = (function (window, document) {
 	var textselect;
 	var sidemenu;
 	var stage;
+
 	var fade;
 	var pause;
+	var title;
 
 	var videoSource;
 	var videoStage;
@@ -622,6 +630,18 @@ APP.init = (function (window, document) {
 				APP.dropped(el, 'Pause');
 			}
 		});
+
+		title = new DragDrop('#titleFX', stage, {
+			draggableClass: 'draggableEffect',
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+			},
+			onDrop: function (el) {
+				el.className += ' effect';
+				el.innerHTML = '<form><label>Title: <span class="value">1</span>s</label><input type="text" value="Title"><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+				APP.dropped(el, 'Title');
+			}
+		});
 	}
 
 	// kickstart
@@ -635,6 +655,10 @@ APP.init = (function (window, document) {
 		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
 		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
 		videoSource.load();
+	}
+
+	function findDraggable (el) {
+		return (/(^|\s)item($|\s)/).test(el.className) ? el : false;
 	}
 
 	window.addEventListener('load', loaded, false);
@@ -776,17 +800,36 @@ APP.init = (function (window, document) {
 		this.el.className += ' edit';
 		this.el._tap = new APP.Tap(el);
 		this.el.addEventListener('tap', this, false);
+
+		document.addEventListener('touchend', this, false);
+		document.addEventListener('mouseup', this, false);
 	}
 
 	EditBlock.prototype.handleEvent = function (e) {
 		switch (e.type) {
+			case 'touchend':
+			case 'mouseup':
+				this.cancel(e);
+				break;
 			case 'tap':
 				this.edit(e);
 				break;
 		}
 	};
 
+	EditBlock.prototype.cancel = function (e) {
+		var target = e.target;
+
+		if ( target == this.el || target.parentNode == this.el || target.parentNode.parentNode == this.el ) {
+			return;
+		}
+
+		this.destroy();
+	};
+
 	EditBlock.prototype.edit = function (e) {
+		e.stopPropagation();
+
 		var theCut = e.target;
 		var cutPointReached;
 		var wordCount = this.words.length;
@@ -835,13 +878,16 @@ APP.init = (function (window, document) {
 
 		APP.dropped(newBlock);
 
-		// Remove edit status
-		this.el.className = this.el.className.replace(/(^|\s)edit(\s|$)/g, ' ');
-
 		this.destroy();
 	};
 
 	EditBlock.prototype.destroy = function () {
+		// Remove edit status
+		this.el.className = this.el.className.replace(/(^|\s)edit(\s|$)/g, ' ');
+
+		document.removeEventListener('touchend', this, false);
+		document.removeEventListener('mouseup', this, false);
+
 		this.el.removeEventListener('tap', this, false);
 		this.el._editBlock = null;
 
@@ -874,6 +920,27 @@ APP.init = (function (window, document) {
 		for ( i = items.length-1; i >= 0; i-- ) {
 			items[i]._tap = new APP.Tap(items[i]);
 			items[i].addEventListener('tap', this.selectMedia.bind(this), false);
+		}
+
+		function onDragStart (e) {
+			stage.className = 'dragdrop';
+		}
+
+		function onDrop (el) {
+			el.className += ' effect';
+			el.innerHTML = '<form><label>BGM: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+			APP.dropped(el, 'BGM');			
+		}
+
+		// add drag and drop to BGM
+		items = document.querySelectorAll('#panel-bgm li');
+		var stage = document.getElementById('stage');
+		for ( i = items.length-1; i >= 0; i-- ) {
+			items[i]._dragInstance = new DragDrop(items[i], stage, {
+				draggableClass: 'draggableEffect',
+				onDragStart: onDragStart,
+				onDrop: onDrop
+			});
 		}
 	}
 
