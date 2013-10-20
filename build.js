@@ -13,7 +13,8 @@ var files = [
 		'src/app.js',
 		'src/tap.js',
 		'src/editblock.js',
-		'src/sidemenu.js'
+		'src/sidemenu.js',
+		'src/fadeFX.js'
 	];
 
 var args = process.argv.slice(2);

@@ -40,6 +40,7 @@ APP.init = (function (window, document) {
 	var textselect;
 	var sidemenu;
 	var stage;
+	var saveButton;
 
 	var fade;
 	var pause;
@@ -51,6 +52,7 @@ APP.init = (function (window, document) {
 	function loaded () {
 		stage = document.getElementById('stage');
 		videoSource = document.querySelector('#video-source video');
+		saveButton = document.getElementById('save-button');
 
 		// Init the main text selection
 		textselect = new WordSelect('#transcript', {
@@ -74,6 +76,13 @@ APP.init = (function (window, document) {
 
 		// Init the side menu
 		sidemenu = new APP.SideMenu('#sidemenu', mediaSelect);
+
+		// Save button
+		saveButton._tap = new APP.Tap(saveButton);
+		saveButton.addEventListener('tap', function () {
+			// this is just for testing, don't use anon functions
+			APP.fadeFX();
+		}, false);
 
 		// Init special fx
 		fade = new DragDrop('#fadeFX', stage, {

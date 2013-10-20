@@ -160,7 +160,6 @@ p {
 	user-select: none;
 }
 
-
 h1 {
 	color: #fff;
 	height: 48px;
@@ -170,6 +169,21 @@ h1 {
 	font-size: 1.75em;
 	text-align: center;
 	/*font-family: 'corehumanistsansregular', 'helvetica neue', arial, sans-serif;*/
+}
+
+#save-button {
+	font-family: 'fontello';
+	width: 48px;
+	height: 48px;
+	position: absolute;
+	top: 0;
+	right: 0px;
+	background: #387847;
+	text-align: center;
+	line-height: 48px;
+	font-size: 1.5em;
+	color: #fff;
+	cursor: pointer;
 }
 
 #transcript {
@@ -231,9 +245,26 @@ h1 {
 	border: 2px solid #000;
 }
 
-#video-result {
+#stage-videos {
 	right: 0;
 	border-left: 2px solid #404040;
+}
+
+#stage-videos video {
+	display: none;
+}
+
+#stage-videos video.active {
+	display: block;
+}
+
+.video-transition-servo {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	z-index: 9999;
 }
 
 #sidemenu {
