@@ -1,8 +1,293 @@
 /*! hyperaudio-pad-testbed v1.1.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
-var DragDrop = (function (window, document) {
+/* Hyperaudio core
+ *
+ */
 
-	function DragDrop (handle, droppable, options) {
+var hyperaudio = (function() {
+
+	// jQuery 2.0.3 (c) 2013 http://jquery.com/
+
+	var
+		// [[Class]] -> type pairs
+		class2type = {},
+		core_toString = class2type.toString,
+		core_hasOwn = class2type.hasOwnProperty;
+
+	function hyperaudio() {
+		// Nada
+	}
+
+	hyperaudio.extend = function() {
+		var options, name, src, copy, copyIsArray, clone,
+			target = arguments[0] || {},
+			i = 1,
+			length = arguments.length,
+			deep = false;
+
+		// Handle a deep copy situation
+		if ( typeof target === "boolean" ) {
+			deep = target;
+			target = arguments[1] || {};
+			// skip the boolean and the target
+			i = 2;
+		}
+
+		// Handle case when target is a string or something (possible in deep copy)
+		if ( typeof target !== "object" && !hyperaudio.isFunction(target) ) {
+			target = {};
+		}
+
+		// extend hyperaudio itself if only one argument is passed
+		if ( length === i ) {
+			target = this;
+			--i;
+		}
+
+		for ( ; i < length; i++ ) {
+			// Only deal with non-null/undefined values
+			if ( (options = arguments[ i ]) !== null ) {
+				// Extend the base object
+				for ( name in options ) {
+					src = target[ name ];
+					copy = options[ name ];
+
+					// Prevent never-ending loop
+					if ( target === copy ) {
+						continue;
+					}
+
+					// Recurse if we're merging plain objects or arrays
+					if ( deep && copy && ( hyperaudio.isPlainObject(copy) || (copyIsArray = hyperaudio.isArray(copy)) ) ) {
+						if ( copyIsArray ) {
+							copyIsArray = false;
+							clone = src && hyperaudio.isArray(src) ? src : [];
+
+						} else {
+							clone = src && hyperaudio.isPlainObject(src) ? src : {};
+						}
+
+						// Never move original objects, clone them
+						target[ name ] = hyperaudio.extend( deep, clone, copy );
+
+					// Don't bring in undefined values
+					} else if ( copy !== undefined ) {
+						target[ name ] = copy;
+					}
+				}
+			}
+		}
+
+		// Return the modified object
+		return target;
+	};
+
+	hyperaudio.extend({
+
+		// See test/unit/core.js for details concerning isFunction.
+		// Since version 1.3, DOM methods and functions like alert
+		// aren't supported. They return false on IE (#2968).
+		isFunction: function( obj ) {
+			return hyperaudio.type(obj) === "function";
+		},
+
+		isArray: Array.isArray,
+
+		isWindow: function( obj ) {
+			return obj !== null && obj === obj.window;
+		},
+
+		type: function( obj ) {
+			if ( obj === null ) {
+				return String( obj );
+			}
+			// Support: Safari <= 5.1 (functionish RegExp)
+			return typeof obj === "object" || typeof obj === "function" ?
+				class2type[ core_toString.call(obj) ] || "object" :
+				typeof obj;
+		},
+
+		isPlainObject: function( obj ) {
+			// Not plain objects:
+			// - Any object or value whose internal [[Class]] property is not "[object Object]"
+			// - DOM nodes
+			// - window
+			if ( hyperaudio.type( obj ) !== "object" || obj.nodeType || hyperaudio.isWindow( obj ) ) {
+				return false;
+			}
+
+			// Support: Firefox <20
+			// The try/catch suppresses exceptions thrown when attempting to access
+			// the "constructor" property of certain host objects, ie. |window.location|
+			// https://bugzilla.mozilla.org/show_bug.cgi?id=814622
+			try {
+				if ( obj.constructor &&
+						!core_hasOwn.call( obj.constructor.prototype, "isPrototypeOf" ) ) {
+					return false;
+				}
+			} catch ( e ) {
+				return false;
+			}
+
+			// If the function hasn't returned already, we're confident that
+			// |obj| is a plain object, created by {} or constructed with new Object
+			return true;
+		}
+	});
+
+	function isArraylike( obj ) {
+		var length = obj.length,
+			type = hyperaudio.type( obj );
+
+		if ( hyperaudio.isWindow( obj ) ) {
+			return false;
+		}
+
+		if ( obj.nodeType === 1 && length ) {
+			return true;
+		}
+
+		return type === "array" || type !== "function" &&
+			( length === 0 ||
+			typeof length === "number" && length > 0 && ( length - 1 ) in obj );
+	}
+	// [End jQuery code]
+
+	// [Adapted from] jQuery 2.0.3 (c) 2013 http://jquery.com/
+	// - each() : removed args parameter (was for use internal to jQuery)
+
+	hyperaudio.extend({
+		each: function( obj, callback ) {
+			var value,
+				i = 0,
+				length = obj.length,
+				isArray = isArraylike( obj );
+
+			if ( isArray ) {
+				for ( ; i < length; i++ ) {
+					value = callback.call( obj[ i ], i, obj[ i ] );
+
+					if ( value === false ) {
+						break;
+					}
+				}
+			} else {
+				for ( i in obj ) {
+					value = callback.call( obj[ i ], i, obj[ i ] );
+
+					if ( value === false ) {
+						break;
+					}
+				}
+			}
+
+			return obj;
+		}
+	});
+	// [End jQuery code]
+
+	hyperaudio.extend({
+		event: {
+			ready: 'ha:ready',
+			load: 'ha:load',
+			error: 'ha:error'
+		},
+		_commonMethods: {
+			options: {
+				DEBUG: true,
+				entity: 'core'
+			},
+			_trigger: function(eventType, eventData) {
+				var eventObject = hyperaudio.extend(true, {options: this.options}, eventData),
+					event = new CustomEvent(eventType, {
+						detail: eventObject,
+						bubbles: true,
+						cancelable: true
+					});
+				this.target.dispatchEvent(event);
+			},
+			_error: function(msg) {
+				var data = {msg: this.options.entity + ' Error : ' + msg};
+				this._trigger(this.event.error, data);
+			},
+			_debug: function() {
+				var self = this;
+				hyperaudio.each(hyperaudio.event, function(eventName, eventType) {
+					self.target.addEventListener(eventType, function(event) {
+						console.log(self.options.entity + ' ' + eventType + ' event : %o', event);
+					}, false);
+				});
+			}
+		},
+		register: function(name, module) {
+			if(typeof name === 'string') {
+				if(typeof module === 'function') {
+					module.prototype = hyperaudio.extend({}, this._commonMethods, module.prototype);
+					this[name] = function(options) {
+						return new module(options);
+					};
+				} else if(typeof module === 'object') {
+					module = hyperaudio.extend({}, this._commonMethods, module);
+					this[name] = module;
+				}
+			}
+		},
+		utility: function(name, utility) {
+			if(typeof name === 'string') {
+				this[name] = utility;
+			}
+		},
+
+		// TMP - This fn is WIP and left in as started making code for JSONP and then put it on hold.
+		jsonp: function(url, scope, callback) {
+			//
+			var head = document.getElementsByTagName('head')[0];
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+
+			var jsonp_i = 0; // TMP - would be in scope of core code as a static.
+
+			// Need to make the callback run in the correct scope.
+			callback[jsonp_i++] = function(json) {
+				callback.call(scope, data);
+			};
+
+			script.src = url;
+
+		},
+
+		hasClass: function(e, c) {
+			if ( !e ) return false;
+
+			var re = new RegExp("(^|\\s)" + c + "(\\s|$)");
+			return re.test(e.className);
+		},
+		addClass: function(e, c) {
+			if ( this.hasClass(e, c) ) {
+				return;
+			}
+
+			e.className += ' ' + c;
+		},
+		removeClass: function (e, c) {
+			if ( !this.hasClass(e, c) ) {
+				return;
+			}
+
+			var re = new RegExp("(^|\\s)" + c + "(\\s|$)", 'g');
+			e.className = e.className.replace(re, ' ');
+		}
+
+	});
+
+	return hyperaudio;
+}());var DragDrop = (function (window, document, hyperaudio) {
+
+	function DragDrop (options) {
+
 		this.options = {
+			handle: null,
+			dropArea: null,
+
 			init: true,
 			touch: true,
 			mouse: true,
@@ -17,19 +302,19 @@ var DragDrop = (function (window, document) {
 			this.options[i] = options[i];
 		}
 
-		this.droppable = typeof droppable == 'string' ? document.querySelector(droppable) : droppable;
+		this.dropArea = typeof this.options.dropArea == 'string' ? document.querySelector(this.options.dropArea) : this.options.dropArea;
 
 		// Create the list and the placeholder
-		this.list = this.droppable.querySelector(this.options.containerTag);
+		this.list = this.dropArea.querySelector(this.options.containerTag);
 		if ( !this.list ) {
 			this.list = document.createElement(this.options.containerTag);
-			this.droppable.appendChild(this.list);
+			this.dropArea.appendChild(this.list);
 		}
 		this.placeholder = document.createElement(this.options.blockTag);
 		this.placeholder.className = 'placeholder';
 
 		if ( this.options.init ) {
-			this.handle = typeof handle == 'string' ? document.querySelector(handle) : handle;
+			this.handle = typeof this.options.handle == 'string' ? document.querySelector(this.options.handle) : this.options.handle;
 			this.handleClassName = this.handle.className;
 
 			// Are we reordering the list?
@@ -161,12 +446,12 @@ var DragDrop = (function (window, document) {
 
 		this.lastTarget = target;
 
-		if ( target == this.droppable ) {
+		if ( target == this.dropArea ) {
 			this.list.appendChild(this.placeholder);
 			return;
 		}
 
-		if ( /(^|\s)item(\s|$)/.test(target.className) ) {
+		if ( hyperaudio.hasClass(target, 'item') ) {
 			var items = this.list.querySelectorAll('.item'),
 				i = 0, l = items.length;
 
@@ -250,44 +535,19 @@ var DragDrop = (function (window, document) {
 	};
 
 	return DragDrop;
-})(window, document);var WordSelect = (function (window, document) {
+})(window, document, hyperaudio);var WordSelect = (function (window, document, hyperaudio) {
 
+	// used just in dev environment
 	function addTagHelpers (el) {
 		var text = (el.innerText || el.textContent).split(' ');
 
 		el.innerHTML = '<a>' + text.join(' </a><a>') + '</a>';
 	}
 
-	function hasClass (e, c) {
-		if ( !e ) return false;
-
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)");
-		return re.test(e.className);
-	}
-
-	function addClass (e, c) {
-		if ( hasClass(e, c) ) {
-			return;
-		}
-
-		var newclass = e.className.split(' ');
-		newclass.push(c);
-		e.className = newclass.join(' ');
-	}
-
-	function removeClass (e, c) {
-		if ( !hasClass(e, c) ) {
-			return;
-		}
-
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)", 'g');
-		e.className = e.className.replace(re, ' ');
-	}
-
-	function WordSelect (el, options) {
-		this.element = document.querySelector(el);
+	function WordSelect (options) {
 
 		this.options = {
+			el: null,
 			addHelpers: false,
 			touch: true,
 			mouse: true,
@@ -297,6 +557,8 @@ var DragDrop = (function (window, document) {
 		for ( var i in options ) {
 			this.options[i] = options[i];
 		}
+
+		this.element = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
 
 		if ( this.options.addHelpers ) {
 			addTagHelpers(this.element);
@@ -355,7 +617,7 @@ var DragDrop = (function (window, document) {
 			window.addEventListener('touchend', this, false);
 		}
 
-		if ( hasClass(e.target, 'selected') ) {
+		if ( hyperaudio.hasClass(e.target, 'selected') ) {
 			this.dragTimeout = setTimeout(this.dragStart.bind(this, e), 500);
 		}
 	};
@@ -372,8 +634,8 @@ var DragDrop = (function (window, document) {
 
 		this.currentWord = target;
 
-		removeClass(this.element.querySelector('.first'), 'first');
-		removeClass(this.element.querySelector('.last'), 'last');
+		hyperaudio.removeClass(this.element.querySelector('.first'), 'first');
+		hyperaudio.removeClass(this.element.querySelector('.last'), 'last');
 
 		if ( this.words[this.startPosition] === target ) {
 			tmp = this.startPosition;
@@ -391,12 +653,12 @@ var DragDrop = (function (window, document) {
 				this.startPosition = i;
 			}
 
-			removeClass(this.words[i], 'selected');
+			hyperaudio.removeClass(this.words[i], 'selected');
 		}
 
 		this.endPosition = this.startPosition;
 
-		addClass(target, 'selected');
+		hyperaudio.addClass(target, 'selected');
 	};
 
 	WordSelect.prototype.move = function (e) {
@@ -432,9 +694,9 @@ var DragDrop = (function (window, document) {
 			if ( ( endPosition === undefined && i >= this.startPosition ) ||
 				( endPosition !== undefined && i <= this.startPosition ) ||
 				endPosition == i ) {
-				addClass(this.words[i], 'selected');
+				hyperaudio.addClass(this.words[i], 'selected');
 			} else {
-				removeClass(this.words[i], 'selected');
+				hyperaudio.removeClass(this.words[i], 'selected');
 			}
 		}
 
@@ -466,8 +728,8 @@ var DragDrop = (function (window, document) {
 		var start = Math.min(this.startPosition, this.endPosition),
 			end = Math.max(this.startPosition, this.endPosition);
 
-		addClass(this.words[start], 'first');
-		addClass(this.words[end], 'last');
+		hyperaudio.addClass(this.words[start], 'first');
+		hyperaudio.addClass(this.words[end], 'last');
 	};
 
 	WordSelect.prototype.clearSelection = function () {
@@ -475,8 +737,8 @@ var DragDrop = (function (window, document) {
 		this.startPosition = null;
 		this.endPosition = null;
 
-		removeClass(this.element.querySelector('.first'), 'first');
-		removeClass(this.element.querySelector('.last'), 'last');
+		hyperaudio.removeClass(this.element.querySelector('.first'), 'first');
+		hyperaudio.removeClass(this.element.querySelector('.last'), 'last');
 
 		if ( this.options.touch ) {
 			this.element.removeEventListener('touchmove', this, false);
@@ -490,7 +752,7 @@ var DragDrop = (function (window, document) {
 
 		var selected = this.element.querySelectorAll('.selected');
 		for ( var i = 0, l = selected.length; i < l; i++ ) {
-			removeClass(selected[i], 'selected');
+			hyperaudio.removeClass(selected[i], 'selected');
 		}
 	};
 
@@ -545,182 +807,16 @@ var DragDrop = (function (window, document) {
 
 	return WordSelect;
 
-})(window, document);
-var APP = {};
+})(window, document, hyperaudio);var Tap = (function (window, document, hyperaudio) {
 
-APP.editBlock = function (e) {
-	e.stopPropagation();
-	this.parentNode._editBlock = new APP.EditBlock(this.parentNode);
-};
+	function Tap (options) {
+		this.options = {};
 
-// Used to reorder already dropped excerpt
-APP.dropped = function (el, html) {
-	var actions;
-	var draggableClass = '';
-	var stage = document.getElementById('stage');
-
-	stage.className = '';
-
-	// add edit action if needed
-	if ( !(/(^|\s)effect($|\s)/.test(el.className)) ) {
-		actions = el.querySelector('.actions');
-		actions._tap = new APP.Tap(actions);
-		actions.addEventListener('tap', APP.editBlock, false);
-	} else {
-		draggableClass = 'draggableEffect';
-	}
-
-	el._dragInstance = new DragDrop(el, stage, {
-		html: html,
-		draggableClass: draggableClass,
-		onDragStart: function () {
-			stage.className = 'dragdrop';
-		},
-		onDrop: function () {
-			stage.className = '';
-		}
-	});
-};
-
-APP.init = (function (window, document) {
-
-	var textselect;
-	var sidemenu;
-	var stage;
-	var saveButton;
-
-	var fade;
-	var pause;
-	var title;
-
-	var videoSource;
-	var videoStage;
-
-	function loaded () {
-		stage = document.getElementById('stage');
-		videoSource = document.querySelector('#video-source video');
-		saveButton = document.getElementById('save-button');
-
-		// Init the main text selection
-		textselect = new WordSelect('#transcript', {
-			addHelpers: false,
-			onDragStart: function (e) {
-				stage.className = 'dragdrop';
-
-				var dragdrop = new DragDrop(null, stage, {
-					init: false,
-					onDrop: function (el) {
-						textselect.clearSelection();
-						this.destroy();
-						APP.dropped(el);
-					}
-				});
-
-				var html = this.getSelection().replace(/ class="[\d\w\s\-]*\s?"/gi, '') + '<div class="actions"></div>';
-				dragdrop.init(html, e);
-			}
-		});
-
-		// Init the side menu
-		sidemenu = new APP.SideMenu('#sidemenu', mediaSelect);
-
-		// Save button
-		saveButton._tap = new APP.Tap(saveButton);
-		saveButton.addEventListener('tap', function () {
-			// this is just for testing, don't use anon functions
-			APP.fadeFX();
-		}, false);
-
-		// Init special fx
-		fade = new DragDrop('#fadeFX', stage, {
-			draggableClass: 'draggableEffect',
-			onDragStart: function (e) {
-				stage.className = 'dragdrop';
-			},
-			onDrop: function (el) {
-				el.className += ' effect';
-				el.innerHTML = '<form><label>Fade Effect: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
-				APP.dropped(el, 'Fade');
-			}
-		});
-
-		pause = new DragDrop('#pauseFX', stage, {
-			draggableClass: 'draggableEffect',
-			onDragStart: function (e) {
-				stage.className = 'dragdrop';
-			},
-			onDrop: function (el) {
-				el.className += ' effect';
-				el.innerHTML = '<form><label>Pause: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
-				APP.dropped(el, 'Pause');
-			}
-		});
-
-		title = new DragDrop('#titleFX', stage, {
-			draggableClass: 'draggableEffect',
-			onDragStart: function (e) {
-				stage.className = 'dragdrop';
-			},
-			onDrop: function (el) {
-				el.className += ' effect';
-				el.innerHTML = '<form><label>Title: <span class="value">1</span>s</label><input type="text" value="Title"><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
-				APP.dropped(el, 'Title');
-			}
-		});
-	}
-
-	// kickstart
-	function init () {
-		// nothing to do
-	}
-
-	function mediaSelect (el) {
-		var source = el.getAttribute('data-source');
-
-		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
-		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
-		videoSource.load();
-	}
-
-	function findDraggable (el) {
-		return (/(^|\s)item($|\s)/).test(el.className) ? el : false;
-	}
-
-	window.addEventListener('load', loaded, false);
-	document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
-
-	return init;
-
-})(window, document);APP.Tap = (function () {
-	function hasClass (e, c) {
-		if ( !e ) return false;
-
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)");
-		return re.test(e.className);
-	}
-
-	function addClass (e, c) {
-		if ( hasClass(e, c) ) {
-			return;
+		for ( var i in options ) {
+			this.options[i] = options[i];
 		}
 
-		var newclass = e.className.split(' ');
-		newclass.push(c);
-		e.className = newclass.join(' ');
-	}
-
-	function removeClass (e, c) {
-		if ( !hasClass(e, c) ) {
-			return;
-		}
-
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)", 'g');
-		e.className = e.className.replace(re, ' ');
-	}
-
-
-	function Tap (el) {
-		this.el = typeof el == 'string' ? document.querySelector(el) : el;
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
 
 		this.el.addEventListener('touchstart', this, false);
 		this.el.addEventListener('mousedown', this, false);
@@ -761,7 +857,7 @@ APP.init = (function (window, document) {
 			this.startY = point.pageY;
 			this.target = e.target;
 
-			addClass(this.target, 'tapPressed');
+			hyperaudio.addClass(this.target, 'tapPressed');
 
 			this.el.addEventListener('touchmove', this, false);
 			this.el.addEventListener('touchend', this, false);
@@ -777,13 +873,13 @@ APP.init = (function (window, document) {
 				y = point.pageY;
 
 			if ( Math.abs( x - this.startX ) > 10 || Math.abs( y - this.startY ) > 10 ) {
-				removeClass(this.target, 'tapPressed');
+				hyperaudio.removeClass(this.target, 'tapPressed');
 				this.moved = true;
 			}
 		},
 
 		_end: function (e) {
-			removeClass(this.target, 'tapPressed');
+			hyperaudio.removeClass(this.target, 'tapPressed');
 
 			if ( !this.moved ) {
 				var ev = document.createEvent('Event'),
@@ -816,14 +912,20 @@ APP.init = (function (window, document) {
 	};
 	
 	return Tap;
-})();APP.EditBlock = (function () {
+})(window, document, hyperaudio);var EditBlock = (function (document) {
 
-	function EditBlock (el) {
-		this.el = typeof el == 'string' ? document.querySelector(el) : el;
+	function EditBlock (options) {
+		this.options = {};
+
+		for ( var i in options ) {
+			this.options[i] = options[i];
+		}
+
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
 		this.words = this.el.querySelectorAll('a');
 
 		this.el.className += ' edit';
-		this.el._tap = new APP.Tap(el);
+		this.el._tap = new Tap({el: this.el});
 		this.el.addEventListener('tap', this, false);
 
 		document.addEventListener('touchend', this, false);
@@ -921,14 +1023,14 @@ APP.init = (function (window, document) {
 	};
 
 	return EditBlock;
-})();APP.SideMenu = (function (document) {
+})(document);var SideMenu = (function (document, hyperaudio) {
 
 	function SideMenu (el, fn) {
 		this.el = document.querySelector(el);
 		this.mediaCallback = fn;
 
 		var handle = document.querySelector('#sidemenu-handle');
-		handle._tap = new APP.Tap(handle);
+		handle._tap = new Tap({el: handle});
 		handle.addEventListener('tap', this.toggleMenu.bind(this), false);
 
 		this.updateStatus();
@@ -936,14 +1038,14 @@ APP.init = (function (window, document) {
 		// handle the tab bar
 		var tabs = document.querySelectorAll('#sidemenu .tabbar li');
 		for ( var i = tabs.length-1; i >= 0; i-- ) {
-			tabs[i]._tap = new APP.Tap(tabs[i]);
+			tabs[i]._tap = new Tap({el: tabs[i]});
 			tabs[i].addEventListener('tap', this.selectPanel.bind(this), false);
 		}
 
 		// handle the items list
 		var items = document.querySelectorAll('#sidemenu .panel');
 		for ( i = items.length-1; i >= 0; i-- ) {
-			items[i]._tap = new APP.Tap(items[i]);
+			items[i]._tap = new Tap({el: items[i]});
 			items[i].addEventListener('tap', this.selectMedia.bind(this), false);
 		}
 
@@ -952,7 +1054,7 @@ APP.init = (function (window, document) {
 		}
 
 		function onDrop (el) {
-			el.className += ' effect';
+			hyperaudio.addClass(el, 'effect');
 			el.innerHTML = '<form><label>BGM: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
 			APP.dropped(el, 'BGM');			
 		}
@@ -961,7 +1063,9 @@ APP.init = (function (window, document) {
 		items = document.querySelectorAll('#panel-bgm li');
 		var stage = document.getElementById('stage');
 		for ( i = items.length-1; i >= 0; i-- ) {
-			items[i]._dragInstance = new DragDrop(items[i], stage, {
+			items[i]._dragInstance = new DragDrop({
+				handle: items[i],
+				dropArea: stage,
 				draggableClass: 'draggableEffect',
 				onDragStart: onDragStart,
 				onDrop: onDrop
@@ -970,7 +1074,7 @@ APP.init = (function (window, document) {
 	}
 
 	SideMenu.prototype.updateStatus = function () {
-		this.opened = /(^|\s)opened(\s|$)/.test(this.el.className);
+		this.opened = hyperaudio.hasClass(this.el, 'opened');
 	};
 
 	SideMenu.prototype.toggleMenu = function () {
@@ -986,7 +1090,7 @@ APP.init = (function (window, document) {
 			return;
 		}
 
-		this.el.className += ' opened';
+		hyperaudio.addClass(this.el, 'opened');
 		this.opened = true;
 	};
 
@@ -995,21 +1099,21 @@ APP.init = (function (window, document) {
 			return;
 		}
 
-		this.el.className = this.el.className.replace(/(^|\s)opened(\s|$)/, ' ');
+		hyperaudio.removeClass(this.el, 'opened');
 		this.opened = false;
 	};
 
 	SideMenu.prototype.selectPanel = function (e) {
 		var current = document.querySelector('#sidemenu .tabbar li.selected');
 		var incoming = e.currentTarget;
-		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
-		incoming.className += ' selected';
+		hyperaudio.removeClass(current, 'selected');
+		hyperaudio.addClass(incoming, 'selected');
 
 		var panelID = 'panel' + incoming.id.replace('sidemenu', '');
 		current = document.querySelector('#sidemenu .panel.selected');
-		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
+		hyperaudio.removeClass(current, 'selected');
 		incoming = document.querySelector('#' + panelID);
-		incoming.className += ' selected';
+		hyperaudio.addClass(incoming, 'selected');
 	};
 
 	SideMenu.prototype.selectMedia = function (e) {
@@ -1025,7 +1129,7 @@ APP.init = (function (window, document) {
 	};
 
 	return SideMenu;
-})(document);APP.fadeFX = (function (window, document) {
+})(document, hyperaudio);var fadeFX = (function (window, document) {
 	var _elementStyle = document.createElement('div').style;
 
 	var _vendor = (function () {
@@ -1184,4 +1288,161 @@ APP.init = (function (window, document) {
 	};
 
 	return fade;
+})(window, document);
+var APP = {};
+
+APP.editBlock = function (e) {
+	e.stopPropagation();
+	this.parentNode._editBlock = new EditBlock({el: this.parentNode});
+};
+
+// Used to reorder already dropped excerpt
+APP.dropped = function (el, html) {
+	var actions;
+	var draggableClass = '';
+	var stage = document.getElementById('stage');
+
+	stage.className = '';
+
+	// add edit action if needed
+	if ( !(/(^|\s)effect($|\s)/.test(el.className)) ) {
+		actions = el.querySelector('.actions');
+		actions._tap = new Tap({el: actions});
+		actions.addEventListener('tap', APP.editBlock, false);
+	} else {
+		draggableClass = 'draggableEffect';
+	}
+
+	el._dragInstance = new DragDrop({
+		handle: el,
+		dropArea: stage,
+
+		html: html,
+		draggableClass: draggableClass,
+		onDragStart: function () {
+			stage.className = 'dragdrop';
+		},
+		onDrop: function () {
+			stage.className = '';
+		}
+	});
+};
+
+APP.init = (function (window, document) {
+
+	var textselect;
+	var sidemenu;
+	var stage;
+	var saveButton;
+
+	var fade;
+	var pause;
+	var title;
+
+	var videoSource;
+	var videoStage;
+
+	function loaded () {
+		stage = document.getElementById('stage');
+		videoSource = document.querySelector('#video-source video');
+		saveButton = document.getElementById('save-button');
+
+		// Init the main text selection
+		textselect = new WordSelect({
+			el: '#transcript',
+			addHelpers: false,
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+
+				var dragdrop = new DragDrop({
+					dropArea: stage,
+					init: false,
+					onDrop: function (el) {
+						textselect.clearSelection();
+						this.destroy();
+						APP.dropped(el);
+					}
+				});
+
+				var html = this.getSelection().replace(/ class="[\d\w\s\-]*\s?"/gi, '') + '<div class="actions"></div>';
+				dragdrop.init(html, e);
+			}
+		});
+
+		// Init the side menu
+		sidemenu = new SideMenu('#sidemenu', mediaSelect);
+
+		// Save button
+		saveButton._tap = new Tap({el: saveButton});
+		saveButton.addEventListener('tap', function () {
+			// this is just for testing, don't use anon functions
+			fadeFX();
+		}, false);
+
+		// Init special fx
+		fade = new DragDrop({
+			handle: '#fadeFX',
+			dropArea: stage, 
+			draggableClass: 'draggableEffect',
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+			},
+			onDrop: function (el) {
+				el.className += ' effect';
+				el.innerHTML = '<form><label>Fade Effect: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+				APP.dropped(el, 'Fade');
+			}
+		});
+
+		pause = new DragDrop({
+			handle: '#pauseFX',
+			dropArea: stage,
+			draggableClass: 'draggableEffect',
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+			},
+			onDrop: function (el) {
+				el.className += ' effect';
+				el.innerHTML = '<form><label>Pause: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+				APP.dropped(el, 'Pause');
+			}
+		});
+
+		title = new DragDrop({
+			handle: '#titleFX',
+			dropArea: stage,
+			draggableClass: 'draggableEffect',
+			onDragStart: function (e) {
+				stage.className = 'dragdrop';
+			},
+			onDrop: function (el) {
+				el.className += ' effect';
+				el.innerHTML = '<form><label>Title: <span class="value">1</span>s</label><input type="text" value="Title"><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+				APP.dropped(el, 'Title');
+			}
+		});
+	}
+
+	// kickstart
+	function init () {
+		// nothing to do
+	}
+
+	function mediaSelect (el) {
+		var source = el.getAttribute('data-source');
+
+		document.getElementById('source-mp4').src = 'videos/' + source + '.mp4';
+		document.getElementById('source-webm').src = 'videos/' + source + '.webm';
+		videoSource.load();
+	}
+
+	function findDraggable (el) {
+		return (/(^|\s)item($|\s)/).test(el.className) ? el : false;
+	}
+
+	window.addEventListener('load', loaded, false);
+	document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+
+	return init;
+
 })(window, document);

@@ -1,11 +1,17 @@
-APP.EditBlock = (function () {
+var EditBlock = (function (document) {
 
-	function EditBlock (el) {
-		this.el = typeof el == 'string' ? document.querySelector(el) : el;
+	function EditBlock (options) {
+		this.options = {};
+
+		for ( var i in options ) {
+			this.options[i] = options[i];
+		}
+
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
 		this.words = this.el.querySelectorAll('a');
 
 		this.el.className += ' edit';
-		this.el._tap = new APP.Tap(el);
+		this.el._tap = new Tap({el: this.el});
 		this.el.addEventListener('tap', this, false);
 
 		document.addEventListener('touchend', this, false);
@@ -103,4 +109,4 @@ APP.EditBlock = (function () {
 	};
 
 	return EditBlock;
-})();
+})(document);

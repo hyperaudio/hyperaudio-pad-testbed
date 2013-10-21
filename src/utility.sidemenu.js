@@ -1,11 +1,11 @@
-APP.SideMenu = (function (document) {
+var SideMenu = (function (document, hyperaudio) {
 
 	function SideMenu (el, fn) {
 		this.el = document.querySelector(el);
 		this.mediaCallback = fn;
 
 		var handle = document.querySelector('#sidemenu-handle');
-		handle._tap = new APP.Tap(handle);
+		handle._tap = new Tap({el: handle});
 		handle.addEventListener('tap', this.toggleMenu.bind(this), false);
 
 		this.updateStatus();
@@ -13,14 +13,14 @@ APP.SideMenu = (function (document) {
 		// handle the tab bar
 		var tabs = document.querySelectorAll('#sidemenu .tabbar li');
 		for ( var i = tabs.length-1; i >= 0; i-- ) {
-			tabs[i]._tap = new APP.Tap(tabs[i]);
+			tabs[i]._tap = new Tap({el: tabs[i]});
 			tabs[i].addEventListener('tap', this.selectPanel.bind(this), false);
 		}
 
 		// handle the items list
 		var items = document.querySelectorAll('#sidemenu .panel');
 		for ( i = items.length-1; i >= 0; i-- ) {
-			items[i]._tap = new APP.Tap(items[i]);
+			items[i]._tap = new Tap({el: items[i]});
 			items[i].addEventListener('tap', this.selectMedia.bind(this), false);
 		}
 
@@ -29,7 +29,7 @@ APP.SideMenu = (function (document) {
 		}
 
 		function onDrop (el) {
-			el.className += ' effect';
+			hyperaudio.addClass(el, 'effect');
 			el.innerHTML = '<form><label>BGM: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
 			APP.dropped(el, 'BGM');			
 		}
@@ -38,7 +38,9 @@ APP.SideMenu = (function (document) {
 		items = document.querySelectorAll('#panel-bgm li');
 		var stage = document.getElementById('stage');
 		for ( i = items.length-1; i >= 0; i-- ) {
-			items[i]._dragInstance = new DragDrop(items[i], stage, {
+			items[i]._dragInstance = new DragDrop({
+				handle: items[i],
+				dropArea: stage,
 				draggableClass: 'draggableEffect',
 				onDragStart: onDragStart,
 				onDrop: onDrop
@@ -47,7 +49,7 @@ APP.SideMenu = (function (document) {
 	}
 
 	SideMenu.prototype.updateStatus = function () {
-		this.opened = /(^|\s)opened(\s|$)/.test(this.el.className);
+		this.opened = hyperaudio.hasClass(this.el, 'opened');
 	};
 
 	SideMenu.prototype.toggleMenu = function () {
@@ -63,7 +65,7 @@ APP.SideMenu = (function (document) {
 			return;
 		}
 
-		this.el.className += ' opened';
+		hyperaudio.addClass(this.el, 'opened');
 		this.opened = true;
 	};
 
@@ -72,21 +74,21 @@ APP.SideMenu = (function (document) {
 			return;
 		}
 
-		this.el.className = this.el.className.replace(/(^|\s)opened(\s|$)/, ' ');
+		hyperaudio.removeClass(this.el, 'opened');
 		this.opened = false;
 	};
 
 	SideMenu.prototype.selectPanel = function (e) {
 		var current = document.querySelector('#sidemenu .tabbar li.selected');
 		var incoming = e.currentTarget;
-		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
-		incoming.className += ' selected';
+		hyperaudio.removeClass(current, 'selected');
+		hyperaudio.addClass(incoming, 'selected');
 
 		var panelID = 'panel' + incoming.id.replace('sidemenu', '');
 		current = document.querySelector('#sidemenu .panel.selected');
-		current.className = current.className.replace(/(^|\s)selected($|\s)/, '');
+		hyperaudio.removeClass(current, 'selected');
 		incoming = document.querySelector('#' + panelID);
-		incoming.className += ' selected';
+		hyperaudio.addClass(incoming, 'selected');
 	};
 
 	SideMenu.prototype.selectMedia = function (e) {
@@ -102,4 +104,4 @@ APP.SideMenu = (function (document) {
 	};
 
 	return SideMenu;
-})(document);
+})(document, hyperaudio);

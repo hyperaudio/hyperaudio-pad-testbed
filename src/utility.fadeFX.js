@@ -1,4 +1,4 @@
-APP.fadeFX = (function (window, document) {
+var fadeFX = (function (window, document) {
 	var _elementStyle = document.createElement('div').style;
 
 	var _vendor = (function () {

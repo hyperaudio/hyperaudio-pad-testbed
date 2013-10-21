@@ -1,33 +1,13 @@
-APP.Tap = (function () {
-	function hasClass (e, c) {
-		if ( !e ) return false;
+var Tap = (function (window, document, hyperaudio) {
 
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)");
-		return re.test(e.className);
-	}
+	function Tap (options) {
+		this.options = {};
 
-	function addClass (e, c) {
-		if ( hasClass(e, c) ) {
-			return;
+		for ( var i in options ) {
+			this.options[i] = options[i];
 		}
 
-		var newclass = e.className.split(' ');
-		newclass.push(c);
-		e.className = newclass.join(' ');
-	}
-
-	function removeClass (e, c) {
-		if ( !hasClass(e, c) ) {
-			return;
-		}
-
-		var re = new RegExp("(^|\\s)" + c + "(\\s|$)", 'g');
-		e.className = e.className.replace(re, ' ');
-	}
-
-
-	function Tap (el) {
-		this.el = typeof el == 'string' ? document.querySelector(el) : el;
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
 
 		this.el.addEventListener('touchstart', this, false);
 		this.el.addEventListener('mousedown', this, false);
@@ -68,7 +48,7 @@ APP.Tap = (function () {
 			this.startY = point.pageY;
 			this.target = e.target;
 
-			addClass(this.target, 'tapPressed');
+			hyperaudio.addClass(this.target, 'tapPressed');
 
 			this.el.addEventListener('touchmove', this, false);
 			this.el.addEventListener('touchend', this, false);
@@ -84,13 +64,13 @@ APP.Tap = (function () {
 				y = point.pageY;
 
 			if ( Math.abs( x - this.startX ) > 10 || Math.abs( y - this.startY ) > 10 ) {
-				removeClass(this.target, 'tapPressed');
+				hyperaudio.removeClass(this.target, 'tapPressed');
 				this.moved = true;
 			}
 		},
 
 		_end: function (e) {
-			removeClass(this.target, 'tapPressed');
+			hyperaudio.removeClass(this.target, 'tapPressed');
 
 			if ( !this.moved ) {
 				var ev = document.createEvent('Event'),
@@ -123,4 +103,4 @@ APP.Tap = (function () {
 	};
 	
 	return Tap;
-})();
+})(window, document, hyperaudio);

@@ -3,7 +3,7 @@ var APP = {};
 
 APP.editBlock = function (e) {
 	e.stopPropagation();
-	this.parentNode._editBlock = new APP.EditBlock(this.parentNode);
+	this.parentNode._editBlock = new EditBlock({el: this.parentNode});
 };
 
 // Used to reorder already dropped excerpt
@@ -17,13 +17,16 @@ APP.dropped = function (el, html) {
 	// add edit action if needed
 	if ( !(/(^|\s)effect($|\s)/.test(el.className)) ) {
 		actions = el.querySelector('.actions');
-		actions._tap = new APP.Tap(actions);
+		actions._tap = new Tap({el: actions});
 		actions.addEventListener('tap', APP.editBlock, false);
 	} else {
 		draggableClass = 'draggableEffect';
 	}
 
-	el._dragInstance = new DragDrop(el, stage, {
+	el._dragInstance = new DragDrop({
+		handle: el,
+		dropArea: stage,
+
 		html: html,
 		draggableClass: draggableClass,
 		onDragStart: function () {
@@ -55,12 +58,14 @@ APP.init = (function (window, document) {
 		saveButton = document.getElementById('save-button');
 
 		// Init the main text selection
-		textselect = new WordSelect('#transcript', {
+		textselect = new WordSelect({
+			el: '#transcript',
 			addHelpers: false,
 			onDragStart: function (e) {
 				stage.className = 'dragdrop';
 
-				var dragdrop = new DragDrop(null, stage, {
+				var dragdrop = new DragDrop({
+					dropArea: stage,
 					init: false,
 					onDrop: function (el) {
 						textselect.clearSelection();
@@ -75,17 +80,19 @@ APP.init = (function (window, document) {
 		});
 
 		// Init the side menu
-		sidemenu = new APP.SideMenu('#sidemenu', mediaSelect);
+		sidemenu = new SideMenu('#sidemenu', mediaSelect);
 
 		// Save button
-		saveButton._tap = new APP.Tap(saveButton);
+		saveButton._tap = new Tap({el: saveButton});
 		saveButton.addEventListener('tap', function () {
 			// this is just for testing, don't use anon functions
-			APP.fadeFX();
+			fadeFX();
 		}, false);
 
 		// Init special fx
-		fade = new DragDrop('#fadeFX', stage, {
+		fade = new DragDrop({
+			handle: '#fadeFX',
+			dropArea: stage, 
 			draggableClass: 'draggableEffect',
 			onDragStart: function (e) {
 				stage.className = 'dragdrop';
@@ -97,7 +104,9 @@ APP.init = (function (window, document) {
 			}
 		});
 
-		pause = new DragDrop('#pauseFX', stage, {
+		pause = new DragDrop({
+			handle: '#pauseFX',
+			dropArea: stage,
 			draggableClass: 'draggableEffect',
 			onDragStart: function (e) {
 				stage.className = 'dragdrop';
@@ -109,7 +118,9 @@ APP.init = (function (window, document) {
 			}
 		});
 
-		title = new DragDrop('#titleFX', stage, {
+		title = new DragDrop({
+			handle: '#titleFX',
+			dropArea: stage,
 			draggableClass: 'draggableEffect',
 			onDragStart: function (e) {
 				stage.className = 'dragdrop';

@@ -8,13 +8,14 @@ var uglify = require('uglify-js');
 var banner = '/*! ' + pkg.name + ' v' + pkg.version + ' ~ (c) 2012-' + (new Date().getFullYear()) + ' ' + pkg.author + ' */\n';
 
 var files = [
-		'node_modules/dragdrop/dragdrop.js',
-		'node_modules/wordselect/wordselect.js',
-		'src/app.js',
-		'src/tap.js',
-		'src/editblock.js',
-		'src/sidemenu.js',
-		'src/fadeFX.js'
+		'src/hyperaudio.core.js',
+		'src/utility.dragdrop.js',
+		'src/utility.wordselect.js',
+		'src/utility.tap.js',
+		'src/utility.editblock.js',
+		'src/utility.sidemenu.js',
+		'src/utility.fadeFX.js',
+		'src/app.js'
 	];
 
 var args = process.argv.slice(2);
