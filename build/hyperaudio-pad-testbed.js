@@ -1,4 +1,4 @@
-/*! hyperaudio-pad-testbed v1.1.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
+/*! hyperaudio-pad-testbed v1.2.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
 /* Hyperaudio core
  *
  */
@@ -274,7 +274,14 @@ var hyperaudio = (function() {
 			}
 
 			var re = new RegExp("(^|\\s)" + c + "(\\s|$)", 'g');
-			e.className = e.className.replace(re, ' ');
+			e.className = e.className.replace(re, ' ').replace(/\s{2,}/g, ' ');
+		},
+		toggleClass: function (e, c) {
+			if ( this.hasClass(e, c) ) {
+				this.removeClass(e, c);
+			} else {
+				this.addClass(e, c);
+			}
 		}
 
 	});
@@ -1025,9 +1032,15 @@ var hyperaudio = (function() {
 	return EditBlock;
 })(document);var SideMenu = (function (document, hyperaudio) {
 
-	function SideMenu (el, fn) {
-		this.el = document.querySelector(el);
-		this.mediaCallback = fn;
+	function SideMenu (options) {
+		this.options = {};
+
+		for ( var i in options ) {
+			this.options[i] = options[i];
+		}
+
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
+		this.mediaCallback = this.options.callback;
 
 		var handle = document.querySelector('#sidemenu-handle');
 		handle._tap = new Tap({el: handle});
@@ -1037,7 +1050,7 @@ var hyperaudio = (function() {
 
 		// handle the tab bar
 		var tabs = document.querySelectorAll('#sidemenu .tabbar li');
-		for ( var i = tabs.length-1; i >= 0; i-- ) {
+		for ( i = tabs.length-1; i >= 0; i-- ) {
 			tabs[i]._tap = new Tap({el: tabs[i]});
 			tabs[i].addEventListener('tap', this.selectPanel.bind(this), false);
 		}
@@ -1054,9 +1067,10 @@ var hyperaudio = (function() {
 		}
 
 		function onDrop (el) {
+			var title = el.innerHTML;
 			hyperaudio.addClass(el, 'effect');
-			el.innerHTML = '<form><label>BGM: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
-			APP.dropped(el, 'BGM');			
+			el.innerHTML = '<form><div>' + title + '</div><label>Delay: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
+			APP.dropped(el, title);
 		}
 
 		// add drag and drop to BGM
@@ -1121,7 +1135,16 @@ var hyperaudio = (function() {
 
 		var starter = e.target;
 
-		if ( !e.target.getAttribute('data-source') || !this.mediaCallback ) {
+		if ( hyperaudio.hasClass(e.target.parentNode, 'folder') ) {
+			starter = e.target.parentNode;
+		}
+
+		if ( hyperaudio.hasClass(starter, 'folder') ) {
+			hyperaudio.toggleClass(starter, 'open');
+			return;
+		}
+
+		if ( !starter.getAttribute('data-source') || !this.mediaCallback ) {
 			return;
 		}
 
@@ -1370,12 +1393,15 @@ APP.init = (function (window, document) {
 		});
 
 		// Init the side menu
-		sidemenu = new SideMenu('#sidemenu', mediaSelect);
+		sidemenu = new SideMenu({
+			el: '#sidemenu',
+			callback: mediaSelect
+		});
 
 		// Save button
 		saveButton._tap = new Tap({el: saveButton});
 		saveButton.addEventListener('tap', function () {
-			// this is just for testing, don't use anon functions
+			// this is just for testing
 			fadeFX();
 		}, false);
 

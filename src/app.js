@@ -80,12 +80,15 @@ APP.init = (function (window, document) {
 		});
 
 		// Init the side menu
-		sidemenu = new SideMenu('#sidemenu', mediaSelect);
+		sidemenu = new SideMenu({
+			el: '#sidemenu',
+			callback: mediaSelect
+		});
 
 		// Save button
 		saveButton._tap = new Tap({el: saveButton});
 		saveButton.addEventListener('tap', function () {
-			// this is just for testing, don't use anon functions
+			// this is just for testing
 			fadeFX();
 		}, false);
 
