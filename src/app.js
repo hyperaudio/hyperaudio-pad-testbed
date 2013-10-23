@@ -89,7 +89,10 @@ APP.init = (function (window, document) {
 		saveButton._tap = new Tap({el: saveButton});
 		saveButton.addEventListener('tap', function () {
 			// this is just for testing
-			fadeFX();
+			titleFX({
+				el: '#titleFXHelper',
+				text: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,'
+			});
 		}, false);
 
 		// Init special fx

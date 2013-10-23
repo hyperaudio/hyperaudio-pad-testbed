@@ -15,6 +15,8 @@ var files = [
 		'src/utility.editblock.js',
 		'src/utility.sidemenu.js',
 		'src/utility.fadeFX.js',
+		//'src/utility.fadeFX2.js',
+		'src/utility.titleFX.js',
 		'src/app.js'
 	];
 

@@ -1,4 +1,4 @@
-/*! hyperaudio-pad-testbed v1.2.0 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
+/*! hyperaudio-pad-testbed v1.2.1 ~ (c) 2012-2013 Hyperaudio Inc. <hello@hyperaud.io> (http://hyperaud.io) */
 /* Hyperaudio core
  *
  */
@@ -45,7 +45,7 @@ var hyperaudio = (function() {
 
 		for ( ; i < length; i++ ) {
 			// Only deal with non-null/undefined values
-			if ( (options = arguments[ i ]) !== null ) {
+			if ( (options = arguments[ i ]) != null ) {
 				// Extend the base object
 				for ( name in options ) {
 					src = target[ name ];
@@ -93,11 +93,11 @@ var hyperaudio = (function() {
 		isArray: Array.isArray,
 
 		isWindow: function( obj ) {
-			return obj !== null && obj === obj.window;
+			return obj != null && obj === obj.window;
 		},
 
 		type: function( obj ) {
-			if ( obj === null ) {
+			if ( obj == null ) {
 				return String( obj );
 			}
 			// Support: Safari <= 5.1 (functionish RegExp)
@@ -189,6 +189,7 @@ var hyperaudio = (function() {
 		event: {
 			ready: 'ha:ready',
 			load: 'ha:load',
+			save: 'ha:save',
 			error: 'ha:error'
 		},
 		_commonMethods: {
@@ -207,7 +208,7 @@ var hyperaudio = (function() {
 			},
 			_error: function(msg) {
 				var data = {msg: this.options.entity + ' Error : ' + msg};
-				this._trigger(this.event.error, data);
+				this._trigger(hyperaudio.event.error, data);
 			},
 			_debug: function() {
 				var self = this;
@@ -1311,6 +1312,136 @@ var hyperaudio = (function() {
 	};
 
 	return fade;
+})(window, document);var titleFX = (function (window, document) {
+	var _elementStyle = document.createElement('div').style;
+
+	var _vendor = (function () {
+		var vendors = ['t', 'webkitT', 'MozT', 'msT', 'OT'],
+			transform,
+			i = 0,
+			l = vendors.length;
+
+		for ( ; i < l; i++ ) {
+			transform = vendors[i] + 'ransform';
+			if ( transform in _elementStyle ) return vendors[i].substr(0, vendors[i].length-1);
+		}
+
+		return false;
+	})();
+
+	function _prefixStyle (style) {
+		if ( _vendor === false ) return false;
+		if ( _vendor === '' ) return style;
+		return _vendor + style.charAt(0).toUpperCase() + style.substr(1);
+	}
+
+	var transition = _prefixStyle('transition');
+	var transitionDuration = _prefixStyle('transitionDuration');
+	var transform = _prefixStyle('transform');
+
+	_elementStyle = null; // free mem ???
+
+	var fxInstance;
+
+	function title (options) {
+		if ( !fxInstance ) {
+			var opt = {
+				el: null,
+				text: '',
+				time: 600,
+				duration: 3000,
+				background: 'rgba(0,0,0,0.8)',
+				color: '#ffffff'
+			};
+
+			for ( var i in options ) {
+				opt[i] = options[i];
+			}
+
+			fxInstance = new TitleEffect(opt);
+		}
+
+		return fxInstance;
+	}
+
+	function TitleEffect (options) {
+		this.options = options;
+
+		this.el = typeof this.options.el == 'string' ? document.querySelector(this.options.el) : this.options.el;
+
+		this.el.innerHTML = this.options.text;
+		this.el.style.backgroundColor = this.options.background;
+		this.el.style.color = this.options.color;
+		this.el.style.left = '0px';
+		this.el.style[transform] = 'translate(0, 100%) translateZ(0)';
+
+		this.el.addEventListener('transitionend', this, false);
+		this.el.addEventListener('webkitTransitionEnd', this, false);
+		this.el.addEventListener('oTransitionEnd', this, false);
+		this.el.addEventListener('MSTransitionEnd', this, false);
+
+		this.start();
+	}
+
+	TitleEffect.prototype.handleEvent = function (e) {
+		switch ( e.type ) {
+			case 'transitionend':
+			case 'webkitTransitionEnd':
+			case 'oTransitionEnd':
+			case 'MSTransitionEnd':
+				this.transitionEnd(e);
+				break;
+		}
+	};
+
+	TitleEffect.prototype.start = function () {
+		this.phase = 'start';
+
+		var trick = this.el.offsetHeight;	// force refresh. Mandatory on FF
+		this.el.style[transitionDuration] = this.options.time + 'ms';
+
+		var that = this;
+		setTimeout(function () {
+			that.el.style[transform] = 'translate(0, 0) translateZ(0)';
+		}, 0);
+	};
+
+	TitleEffect.prototype.transitionEnd = function (e) {
+		e.stopPropagation();
+
+		if ( this.phase == 'start' ) {
+			this.phase = 'waiting';
+			this.timeout = setTimeout(this.end.bind(this), this.options.duration);
+			return;
+		}
+
+		if ( this.options.onEnd ) {
+			this.options.onEnd.call(this);
+		}
+
+		this.destroy();
+	};
+
+	TitleEffect.prototype.end = function () {
+		this.phase = 'end';
+		this.el.style[transform] = 'translate(0, 100%) translateZ(0)';
+	};
+
+	TitleEffect.prototype.destroy = function () {
+		clearTimeout(this.timeout);
+
+		this.el.removeEventListener('transitionend', this, false);
+		this.el.removeEventListener('webkitTransitionEnd', this, false);
+		this.el.removeEventListener('oTransitionEnd', this, false);
+		this.el.removeEventListener('MSTransitionEnd', this, false);
+
+		this.el.style[transitionDuration] = '0s';
+		this.el.style.left = '-9999px';
+
+		fxInstance = null;
+	};
+
+	return title;
 })(window, document);
 var APP = {};
 
@@ -1402,7 +1533,10 @@ APP.init = (function (window, document) {
 		saveButton._tap = new Tap({el: saveButton});
 		saveButton.addEventListener('tap', function () {
 			// this is just for testing
-			fadeFX();
+			titleFX({
+				el: '#titleFXHelper',
+				text: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,'
+			});
 		}, false);
 
 		// Init special fx

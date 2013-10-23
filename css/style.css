@@ -254,6 +254,23 @@ h1 {
 	z-index: 9999;
 }
 
+.title-effect-servo {
+	position: absolute;
+	width: 100%;
+	text-align: center;
+	padding: 20px;
+	bottom: 0;
+	font-size: 1.2em;
+	left: -9999px;
+	z-index: 9998;
+	line-height: 140%;
+	-webkit-transition-property: -webkit-transform;
+	-moz-transition-property: -moz-transform;
+	-ms-transition-property: -ms-transform;
+	-o-transition-property: -o-transform;
+	transition-property: transform;
+}
+
 #sidemenu {
 	position: absolute;
 	top: 0;
