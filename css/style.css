@@ -216,7 +216,6 @@ h1 input:focus {
 	padding: 1em;
 	font-size: 1.2em;
 	width: 50%;
-	height: 100%;
 	overflow: auto;
 	border-left: 2px solid #ccc;
 	-webkit-touch-callout: none;
