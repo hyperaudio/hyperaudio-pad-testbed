@@ -152,10 +152,24 @@ h1 {
 	height: 48px;
 	line-height: 48px;
 	text-transform: uppercase;
-	text-shadow: 0 -1px 0 rgba(0,0,0,0.35);
+	/*text-shadow: 0 -1px 0 rgba(0,0,0,0.35);*/
 	font-size: 1.75em;
 	text-align: center;
-	/*font-family: 'corehumanistsansregular', 'helvetica neue', arial, sans-serif;*/
+}
+
+h1 input {
+	text-align: center;
+	background: transparent;
+	padding: 3px;
+	width: 400px;
+	color: #fff;
+	text-shadow: 0 -1px 0 rgba(0,0,0,0.35);
+}
+
+h1 input:focus {
+	background: #CEF2D6;
+	color: #222;
+	outline: none;
 }
 
 #save-button {

@@ -34,7 +34,7 @@ var titleFX = (function (window, document) {
 			var opt = {
 				el: null,
 				text: '',
-				time: 600,
+				speed: 600,
 				duration: 3000,
 				background: 'rgba(0,0,0,0.8)',
 				color: '#ffffff'
@@ -84,7 +84,7 @@ var titleFX = (function (window, document) {
 		this.phase = 'start';
 
 		var trick = this.el.offsetHeight;	// force refresh. Mandatory on FF
-		this.el.style[transitionDuration] = this.options.time + 'ms';
+		this.el.style[transitionDuration] = this.options.speed + 'ms';
 
 		var that = this;
 		setTimeout(function () {

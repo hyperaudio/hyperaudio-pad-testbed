@@ -1068,6 +1068,10 @@ var hyperaudio = (function() {
 		}
 
 		function onDrop (el) {
+			if ( !el ) {
+				return;
+			}
+
 			var title = el.innerHTML;
 			hyperaudio.addClass(el, 'effect');
 			el.innerHTML = '<form><div>' + title + '</div><label>Delay: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
@@ -1348,7 +1352,7 @@ var hyperaudio = (function() {
 			var opt = {
 				el: null,
 				text: '',
-				time: 600,
+				speed: 600,
 				duration: 3000,
 				background: 'rgba(0,0,0,0.8)',
 				color: '#ffffff'
@@ -1398,7 +1402,7 @@ var hyperaudio = (function() {
 		this.phase = 'start';
 
 		var trick = this.el.offsetHeight;	// force refresh. Mandatory on FF
-		this.el.style[transitionDuration] = this.options.time + 'ms';
+		this.el.style[transitionDuration] = this.options.speed + 'ms';
 
 		var that = this;
 		setTimeout(function () {
@@ -1514,6 +1518,9 @@ APP.init = (function (window, document) {
 					onDrop: function (el) {
 						textselect.clearSelection();
 						this.destroy();
+						if ( !el ) {
+							return;
+						}
 						APP.dropped(el);
 					}
 				});
@@ -1548,6 +1555,9 @@ APP.init = (function (window, document) {
 				stage.className = 'dragdrop';
 			},
 			onDrop: function (el) {
+				if ( !el ) {
+					return;
+				}
 				el.className += ' effect';
 				el.innerHTML = '<form><label>Fade Effect: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
 				APP.dropped(el, 'Fade');
@@ -1562,6 +1572,9 @@ APP.init = (function (window, document) {
 				stage.className = 'dragdrop';
 			},
 			onDrop: function (el) {
+				if ( !el ) {
+					return;
+				}
 				el.className += ' effect';
 				el.innerHTML = '<form><label>Pause: <span class="value">1</span>s</label><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
 				APP.dropped(el, 'Pause');
@@ -1576,6 +1589,9 @@ APP.init = (function (window, document) {
 				stage.className = 'dragdrop';
 			},
 			onDrop: function (el) {
+				if ( !el ) {
+					return;
+				}
 				el.className += ' effect';
 				el.innerHTML = '<form><label>Title: <span class="value">1</span>s</label><input type="text" value="Title"><input type="range" value="1" min="0.5" max="5" step="0.1" onchange="this.parentNode.querySelector(\'span\').innerHTML = this.value"></form>';
 				APP.dropped(el, 'Title');
